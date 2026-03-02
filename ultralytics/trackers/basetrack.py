@@ -64,7 +64,7 @@ class BaseTrack:
 
     _count = 0
 
-    def __init__(self):
+    def __init__(self, xywh):
         """Initialize a new track with a unique ID and foundational tracking attributes."""
         self.track_id = 0
         self.is_activated = False
@@ -77,6 +77,7 @@ class BaseTrack:
         self.frame_id = 0
         self.time_since_update = 0
         self.location = (np.inf, np.inf)
+        self.start_location = (int(xywh[0]), int(xywh[1]), int(xywh[2]), int(xywh[3]))
 
     @property
     def end_frame(self) -> int:

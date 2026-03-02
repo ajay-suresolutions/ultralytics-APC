@@ -61,7 +61,7 @@ class STrack(BaseTrack):
             score (float): Confidence score of the detection.
             cls (Any): Class label for the detected object.
         """
-        super().__init__()
+        super().__init__(xywh=xywh)  # Initialize BaseTrack with xywh for start_location
         # xywh+idx or xywha+idx
         assert len(xywh) in {5, 6}, f"expected 5 or 6 values but got {len(xywh)}"
         self._tlwh = np.asarray(xywh2ltwh(xywh[:4]), dtype=np.float32)
@@ -409,6 +409,29 @@ class BYTETracker:
     def get_dists(self, tracks: list[STrack], detections: list[STrack]) -> np.ndarray:
         """Calculate the distance between tracks and detections using IoU and optionally fuse scores."""
         dists = matching.iou_distance(tracks, detections)
+        # --- Directional gating ---
+        INF = 1e6
+        JITTER_X = 30  # pixels
+        JITTER_Y = 30  # pixels
+        for i, track in enumerate(tracks):
+            track_x = track.xywh[0]
+            track_y = track.xywh[1]
+            for j, det in enumerate(detections):
+                det_x = det.xywh[0]
+                det_y = det.xywh[1]
+
+                if track.start_location[0] > 320:  
+                    # print("Entered from out.")
+                    x_viol = det_x > track_x + JITTER_X
+                    y_viol = det_y < track_y - JITTER_Y
+                else: 
+                    # print("Entered from in.")
+                    x_viol = det_x < track_x - JITTER_X
+                    y_viol = det_y > track_y + JITTER_Y
+                    
+                if x_viol or y_viol:
+                    dists[i, j] = INF
+
         if self.args.fuse_score:
             dists = matching.fuse_score(dists, detections)
         return dists
