@@ -420,7 +420,8 @@ class BYTETracker:
                 det_x = det.xywh[0]
                 det_y = det.xywh[1]
 
-                if track.start_location[0] > 320:  
+                # if track.start_location[0] > 320:  
+                if track.start_location[1] < int(track_y):  
                     # print("Entered from out.")
                     x_viol = det_x > track_x + JITTER_X
                     y_viol = det_y < track_y - JITTER_Y

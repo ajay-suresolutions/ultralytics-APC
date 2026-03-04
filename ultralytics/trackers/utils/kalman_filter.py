@@ -52,8 +52,8 @@ class KalmanFilterXYAH:
         self._update_mat = np.eye(ndim, 2 * ndim)
 
         # Motion and observation uncertainty are chosen relative to the current state estimate
-        self._std_weight_position = 1.0 / 20
-        self._std_weight_velocity = 1.0 / 160
+        self._std_weight_position = 1.0 / 60
+        self._std_weight_velocity = 1.0 / 60
 
     def initiate(self, measurement: np.ndarray):
         """Create a track from an unassociated measurement.
@@ -220,9 +220,12 @@ class KalmanFilterXYAH:
         kalman_gain = scipy.linalg.cho_solve(
             (chol_factor, lower), np.dot(covariance, self._update_mat.T).T, check_finite=False
         ).T
-        innovation = measurement - projected_mean
+        # innovation = measurement - projected_mean
+        # new_mean = mean + np.dot(innovation, kalman_gain.T)
 
-        new_mean = mean + np.dot(innovation, kalman_gain.T)
+        new_mean = mean.copy()
+        new_mean[:4] = measurement        
+
         new_covariance = covariance - np.linalg.multi_dot((kalman_gain, projected_cov, kalman_gain.T))
         return new_mean, new_covariance
 
